@@ -1,9 +1,19 @@
-import type { Context, Next } from '@oak/oak'
+import { Common } from '../common.ts'
 
-export default async function notFound(ctx: Context, next: Next) {
-  await next()
+import type { Middleware } from '@oak/oak'
 
-  ctx.response.redirect('https://github.com/vikiboss/60s')
+export function notFound(): Middleware {
+  return async (ctx, next) => {
+    await next()
 
-  return
+    ctx.response.status = 404
+
+    ctx.response.body = Common.buildJson(
+      null,
+      404,
+      `404, 接口被吃掉了，请检查！应用接口需要在 Base URL 后面带上版本号，如 /v2/60s`,
+    )
+
+    return
+  }
 }

@@ -1,74 +1,174 @@
 import { Router } from '@oak/oak/router'
+import { Common } from './common.ts'
 
-import { fetch60s } from './services/60s.ts'
-import { fetchBaike } from './services/baike.ts'
-import { fetchBili } from './services/bili.ts'
-import { fetchBing } from './services/bing.ts'
-import { fetchDouyin } from './services/douyin.ts'
-import { fetchEpicFreeGames } from './services/epic.ts'
-import { fetchRatesByCurrency } from './services/ext-rates.ts'
-import { fetchTodayInHistory } from './services/today-in-history.ts'
-import { fetchToutiao } from './services/toutiao.ts'
-import { fetchWeather } from './services/weather.ts'
-import { fetchWeibo } from './services/weibo.ts'
-import { fetchXiaoai } from './legacy-services/xiaoai.ts'
-import { fetchZhihu } from './services/zhihu.ts'
-import { fetchZhihuHot } from './services/zhihu-hot.ts'
-import { fetchOlympics } from './services/olympics.ts'
+import { service60s } from './modules/60s.module.ts'
+import { service60sRss } from './modules/60s-rss.module.ts'
+import { serviceAINews } from './modules/ai-news.module.ts'
+import { serviceAnswer } from './modules/answer/answer.module.ts'
+import { serviceAwesomeJs } from './modules/awesome-js/awesome-js.module.ts'
+import { serviceBaike } from './modules/baike.module.ts'
+import { serviceBili } from './modules/bili.module.ts'
+import { serviceBing } from './modules/bing.module.ts'
+import { serviceChangYa } from './modules/changya.module.ts'
+import { serviceChemical } from './modules/chemical.module.ts'
+import { serviceDouyin } from './modules/douyin.module.ts'
+import { serviceDuanzi } from './modules/duanzi/duanzi.module.ts'
+import { serviceEpic } from './modules/epic.module.ts'
+import { serviceExRate } from './modules/exchange-rate.module.ts'
+import { serviceFabing } from './modules/fabing/fabing.module.ts'
+import { serviceFanyi } from './modules/fanyi/fanyi.module.ts'
+import { serviceHash } from './modules/hash.module.ts'
+import { serviceHitokoto } from './modules/hitokoto/hitokoto.module.ts'
+import { serviceIP } from './modules/ip.module.ts'
+import { serviceKfc } from './modules/kfc.module.ts'
+import { serviceLuck } from './modules/luck/luck.module.ts'
+import { serviceLunar } from './modules/lunar/lunar.module.ts'
+import { serviceMaoyan } from './modules/maoyan/maoyan.module.ts'
+import { serviceNcm } from './modules/ncm.module.ts'
+import { serviceOG } from './modules/og.module.ts'
+import { serviceQQ } from './modules/qq.module.ts'
+import { serviceQRCode } from './modules/qrcode/qrcode.module.ts'
+import { serviceTodayInHistory } from './modules/today-in-history.module.ts'
+import { serviceToutiao } from './modules/toutiao.module.ts'
+import { serviceWeather } from './modules/weather.module.ts'
+import { serviceWeibo } from './modules/weibo.module.ts'
+import { serviceZhihu } from './modules/zhihu.module.ts'
+import { serviceDadJoke } from './modules/dad-joke/dad-joke.module.ts'
+import { serviceHackerNews } from './modules/hacker-news.module.ts'
+import { serviceRednote } from './modules/rednote.module.ts'
+import { serviceBaidu } from './modules/baidu.module.ts'
+import { serviceDongchedi } from './modules/dongchedi.module.ts'
+import { serviceHealth } from './modules/health.module.ts'
+import { servicePassword } from './modules/password/password.module.ts'
+import { serviceColor } from './modules/color.module.ts'
+import { serviceKuan } from './modules/kuan.module.ts'
+import { serviceLyric } from './modules/lyric.module.ts'
+import { serviceMoyu } from './modules/moyu.module.ts'
+import { serviceFuelPrice } from './modules/fuel-price/fuel-price.module.ts'
+import { GoldPriceService } from './modules/gold-price.module.ts'
+import { serviceQuark } from './modules/quark.module.ts'
+import { serviceWhois } from './modules/whois.module.ts'
+import { olympicsService } from './modules/olympics/olympics.module.ts'
+import { serviceDoubanWeekly } from './modules/douban-weekly.module.ts'
+import { serviceITNews } from './modules/it-news.module.ts'
 
-const router = new Router()
+// import { serviceSlackingCalendar } from './modules/slacking-calendar/slacking-calendar.module.ts'
 
-const routerMap = {
-  '/': fetch60s,
-  '/60s': fetch60s,
-  '/olympic': fetchOlympics,
-  '/bili': fetchBili,
-  '/weibo': fetchWeibo,
-  '/zhihu': fetchZhihu,
-  '/zhihu-hot': fetchZhihuHot,
-  '/toutiao': fetchToutiao,
-  '/douyin': fetchDouyin,
-  '/epic': fetchEpicFreeGames,
-  '/today_in_history': fetchTodayInHistory,
-}
+const serviceGoldPrice = new GoldPriceService()
 
-for (const [path, handler] of Object.entries(routerMap)) {
-  router.get(path, async (ctx) => {
-    ctx.response.body = await handler(ctx.state.type, ctx)
-  })
-}
+export const rootRouter = new Router()
 
-// weather
-router.get('/weather/:city', async (ctx) => {
-  ctx.response.body = await fetchWeather(ctx.params.city, ctx.state.type, ctx)
+rootRouter.get('/', (ctx) => {
+  ctx.response.headers.set('Content-Type', 'application/json; charset=utf-8')
+  const endpoints = Array.from(appRouter.entries(), ([_, v]) => v.path)
+  ctx.response.body = JSON.stringify({ ...Common.getApiInfo(), endpoints }, null, 2)
 })
 
-// baike
-router.get('/baike/:item', async (ctx) => {
-  ctx.response.body = await fetchBaike(ctx.params.item, ctx.state.type)
+rootRouter.get('/health', (ctx) => {
+  ctx.response.body = 'ok'
 })
 
-// exchange rates
-router.get('/ex-rates', async (ctx) => {
-  const url = new URL(ctx.request.url)
-  const currency = url.searchParams.get('c') || 'CNY'
-  ctx.response.body = await fetchRatesByCurrency(currency, ctx.state.type)
+rootRouter.get('/endpoints', (ctx) => {
+  ctx.response.headers.set('Content-Type', 'application/json; charset=utf-8')
+  ctx.response.body = Array.from(appRouter.entries(), ([_, v]) => v.path)
 })
 
-// bing wallpaper
-router.get('/bing', async (ctx) => {
-  if (ctx.state.type === 'image') {
-    ctx.response.redirect(await fetchBing(ctx.state.type))
-  } else {
-    ctx.response.body = await fetchBing(ctx.state.type)
-  }
+export const appRouter = new Router({
+  prefix: '/v2',
 })
 
-// 小爱，已失效
-router.get('/xiaoai', async (ctx) => {
-  const text = ctx.request.url.searchParams.get('text') || '你好'
-  const textOnly = ctx.request.url.searchParams.get('text-only') === '1'
-  ctx.response.body = await fetchXiaoai(text, textOnly, ctx.state.type)
-})
+// === 以下为已发布的正式接口 ===
+appRouter.get('/60s', service60s.handle())
+appRouter.get('/60s/rss', service60sRss.handle())
+appRouter.get('/answer', serviceAnswer.handle())
+appRouter.get('/baike', serviceBaike.handle())
+appRouter.get('/bili', serviceBili.handle())
+appRouter.get('/bing', serviceBing.handle())
+appRouter.get('/changya', serviceChangYa.handle())
+appRouter.get('/chemical', serviceChemical.handle())
+appRouter.get('/douyin', serviceDouyin.handle())
+appRouter.get('/duanzi', serviceDuanzi.handle())
+appRouter.get('/epic', serviceEpic.handle())
+appRouter.get('/exchange-rate', serviceExRate.handle())
+appRouter.get('/fabing', serviceFabing.handle())
+appRouter.get('/hitokoto', serviceHitokoto.handle())
+appRouter.get('/ip', serviceIP.handle())
+appRouter.get('/kfc', serviceKfc.handle())
+appRouter.get('/luck', serviceLuck.handle())
+appRouter.get('/today-in-history', serviceTodayInHistory.handle())
+appRouter.get('/toutiao', serviceToutiao.handle())
+appRouter.get('/weibo', serviceWeibo.handle())
+appRouter.get('/zhihu', serviceZhihu.handle())
+appRouter.get('/lunar', serviceLunar.handle())
+appRouter.get('/ai-news', serviceAINews.handle())
+appRouter.get('/it-news', serviceITNews.handle())
+appRouter.get('/it-news/rank', serviceITNews.handleRank())
+appRouter.get('/awesome-js', serviceAwesomeJs.handle())
+appRouter.get('/qrcode', serviceQRCode.handle())
+appRouter.get('/dad-joke', serviceDadJoke.handle())
+appRouter.get('/rednote', serviceRednote.handle())
+appRouter.get('/dongchedi', serviceDongchedi.handle())
+appRouter.get('/moyu', serviceMoyu.handle())
+appRouter.get('/quark', serviceQuark.handle())
+appRouter.get('/whois', serviceWhois.handle())
 
-export default router
+appRouter.get('/health', serviceHealth.handle())
+appRouter.get('/password', servicePassword.handle())
+appRouter.get('/password/check', servicePassword.handleCheck())
+
+appRouter.get('/maoyan/all/movie', serviceMaoyan.handleAllMovie())
+appRouter.get('/maoyan/realtime/movie', serviceMaoyan.handleRealtime('movie'))
+appRouter.get('/maoyan/realtime/tv', serviceMaoyan.handleRealtime('tv'))
+appRouter.get('/maoyan/realtime/web', serviceMaoyan.handleRealtime('web'))
+
+appRouter.get('/hacker-news/new', serviceHackerNews.handle('top'))
+appRouter.get('/hacker-news/top', serviceHackerNews.handle('top'))
+appRouter.get('/hacker-news/best', serviceHackerNews.handle('best'))
+
+appRouter.get('/baidu/hot', serviceBaidu.handleHotSearch())
+appRouter.get('/baidu/teleplay', serviceBaidu.handleTeleplay())
+appRouter.get('/baidu/tieba', serviceBaidu.handleTieba())
+
+appRouter.get('/weather/realtime', serviceWeather.handle())
+appRouter.get('/weather/forecast', serviceWeather.handleForecast())
+
+appRouter.get('/ncm-rank/list', serviceNcm.handleRank())
+appRouter.get('/ncm-rank/:id', serviceNcm.handleRankDetail())
+
+appRouter.get('/color/random', serviceColor.handle())
+appRouter.get('/color/palette', serviceColor.handlePalette())
+
+appRouter.all('/lyric', serviceLyric.handle())
+appRouter.all('/fuel-price', serviceFuelPrice.handle())
+appRouter.get('/gold-price', serviceGoldPrice.handle())
+appRouter.get('/olympics', olympicsService.handle())
+appRouter.get('/olympics/events', olympicsService.handleEventList())
+
+appRouter.get('/douban/weekly/movie', serviceDoubanWeekly.handle('movie'))
+appRouter.get('/douban/weekly/tv_chinese', serviceDoubanWeekly.handle('tv_chinese'))
+appRouter.get('/douban/weekly/tv_global', serviceDoubanWeekly.handle('tv_global'))
+appRouter.get('/douban/weekly/show_chinese', serviceDoubanWeekly.handle('show_chinese'))
+appRouter.get('/douban/weekly/show_global', serviceDoubanWeekly.handle('show_global'))
+
+// === 以下为支持 body 解析参数的接口 ===
+appRouter.all('/og', serviceOG.handle())
+appRouter.all('/hash', serviceHash.handle())
+
+appRouter.all('/fanyi', serviceFanyi.handle())
+appRouter.all('/fanyi/langs', serviceFanyi.handleLangs())
+
+// === 以下为测试接口，beta 前缀，接口可能不稳定 ===
+appRouter.get('/beta/kuan', serviceKuan.handle())
+appRouter.get('/beta/qq/profile', serviceQQ.handle())
+
+// === 以下为待定接口，还在计划、开发中 ===
+// appRouter.get('/slacking-calendar', serviceSlackingCalendar.handle())
+
+// === 以下接口为兼容保留，未来大版本移除 ===
+appRouter.get('/exchange_rate', serviceExRate.handle())
+appRouter.get('/today_in_history', serviceTodayInHistory.handle())
+appRouter.get('/maoyan', serviceMaoyan.handleAllMovie())
+appRouter.get('/baidu/realtime', serviceBaidu.handleHotSearch())
+appRouter.get('/weather', serviceWeather.handle())
+appRouter.get('/ncm-rank', serviceNcm.handleRank())
+appRouter.get('/color', serviceColor.handle())

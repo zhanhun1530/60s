@@ -1,12 +1,20 @@
-import type { Context, Next } from "@oak/oak";
+import { serviceIP } from '../modules/ip.module.ts'
 
-export default async function debug(ctx: Context, next: Next) {
-	// for debug
-	const ua = ctx.request.headers.get("user-agent") || "Unknown";
-	const ip = ctx.request.ip || "Unknown";
-	const date = new Date().toLocaleString("zh-CN");
+import type { Middleware } from '@oak/oak'
 
-	console.log(`[${date}] [${ip}] [${ua}] ${ctx.request.url.href}`);
+export function debug(): Middleware {
+  return async (ctx, next) => {
+    const ua = ctx.request.headers?.get('user-agent') || ''
+    const referrer = ctx.request.headers?.get('referer') || ''
+    const ip = serviceIP.getClientIP(ctx.request.headers) || ctx.request.ip || '-'
+    const url = ctx.request.url.href || ''
+    const method = ctx.request.method || ''
+    const date = new Date().toLocaleString('zh-CN')
 
-	await next();
+    console.log(`[${date}] [${ip}] ${method.toUpperCase()} ${url} (${ua || '未知 UA'})`)
+
+    if (referrer) console.log(`[${date}] [${ip}] Referrer: ${referrer}`)
+
+    await next()
+  }
 }

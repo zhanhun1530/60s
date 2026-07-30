@@ -1,8 +1,9 @@
-import process from 'node:process'
 import { app } from './src/app.ts'
+import { config } from './src/config.ts'
 
-globalThis.env = process.env || {}
+console.log(`service is running at http://localhost:${config.port}`)
 
-console.log('service is running at http://localhost:8000')
-
-await app.listen({ port: 8000 })
+await app.listen({
+  hostname: config.host,
+  port: config.port,
+})
